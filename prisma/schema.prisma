@@ -1,0 +1,721 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// CAPA 1: SEGURIDAD Y ADMINISTRACIÓN
+// =============================================
+
+model tbl_roles {
+  id                      Int                  @id @default(autoincrement())
+  nombre                  String               @unique @db.VarChar(50)
+  descripcion             String?
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime?            @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime?            @db.Timestamptz(6)
+  estado                  Int                  @default(1)
+  tbl_roles_permisos      tbl_roles_permisos[]
+  tbl_usuarios            tbl_usuarios[]
+}
+
+model tbl_permisos {
+  id                      Int                  @id @default(autoincrement())
+  codigo                  String               @unique @db.VarChar(100)
+  nombre                  String               @db.VarChar(100)
+  descripcion             String?
+  tipo                    String               @db.VarChar(50)
+  recurso                 String?              @db.VarChar(150)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime?            @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime?            @db.Timestamptz(6)
+  estado                  Int                  @default(1)
+  tbl_roles_permisos      tbl_roles_permisos[]
+}
+
+model tbl_roles_permisos {
+  id                      Int           @id @default(autoincrement())
+  id_rol                  Int?
+  id_permiso              Int?
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime?     @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime?     @db.Timestamptz(6)
+  estado                  Int           @default(1)
+  tbl_permisos            tbl_permisos? @relation(fields: [id_permiso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tbl_roles               tbl_roles?    @relation(fields: [id_rol], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model tbl_usuarios {
+  id                      Int       @id @default(autoincrement())
+  nombres                 String    @db.VarChar(100)
+  apellidos               String?   @db.VarChar(100)
+  correo                  String    @unique @db.VarChar(150)
+  contrasena              String    @db.VarChar(255)
+  id_rol                  Int
+  celular                 String?   @db.VarChar(20)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_roles            tbl_roles             @relation(fields: [id_rol], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuarios_roles")
+  tbl_perfil_docente   tbl_perfiles_docente?
+  tbl_alumno           tbl_alumnos?
+}
+
+model tbl_perfiles_docente {
+  id                      Int       @id @default(autoincrement())
+  id_usuario              Int       @unique
+  nombres                 String    @db.VarChar(100)
+  apellidos               String    @db.VarChar(100)
+  especialidad            String?   @db.VarChar(100)
+  telefono                String?   @db.VarChar(20)
+  foto_url                String?   @db.VarChar(500)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_usuarios              tbl_usuarios               @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_perfil_docente_usuario")
+  tbl_cursos                tbl_cursos[]
+  tbl_alumnos               tbl_alumnos[]
+  tbl_padres                tbl_padres[]
+  tbl_sesiones_asistencia   tbl_sesiones_asistencia[]
+  tbl_esquemas_calificacion tbl_esquemas_calificacion[]
+  tbl_trivia_temas          tbl_trivia_temas[]
+  tbl_trivia_partidas       tbl_trivia_partidas[]
+}
+
+model tbl_configuracion_sistema {
+  id                      Int       @id @default(autoincrement())
+  nombre_sistema          String    @db.VarChar(200)
+  color_primario          String    @db.VarChar(20)
+  color_secundario        String    @db.VarChar(20)
+  color_acento            String?   @db.VarChar(20)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+}
+
+model tbl_activos_marca {
+  id                      Int       @id @default(autoincrement())
+  tipo_activo             String    @db.VarChar(50) // logo
+  url_archivo             String
+  esta_activo             Boolean   @default(true)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+}
+
+// =============================================
+// CAPA 2: ESTRUCTURA ACADÉMICA
+// =============================================
+
+model tbl_periodos_escolares {
+  id                      Int       @id @default(autoincrement())
+  nombre                  String    @db.VarChar(100)
+  anio                    Int?
+  fecha_inicio            DateTime  @db.Date
+  fecha_fin               DateTime  @db.Date
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_cursos                tbl_cursos[]
+  tbl_sesiones_asistencia   tbl_sesiones_asistencia[]
+  tbl_esquemas_calificacion tbl_esquemas_calificacion[]
+  tbl_notas_cabecera        tbl_notas_cabecera[]
+  tbl_envios_whatsapp       tbl_envios_whatsapp[]
+  tbl_trivia_partidas       tbl_trivia_partidas[]
+}
+
+model tbl_cursos {
+  id                      Int       @id @default(autoincrement())
+  id_docente              Int
+  id_periodo_escolar      Int
+  nombre                  String    @db.VarChar(100)
+  descripcion             String?
+  grado                   String?   @db.VarChar(20)
+  seccion                 String?   @db.VarChar(20)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_perfiles_docente      tbl_perfiles_docente       @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_docente")
+  tbl_periodos_escolares    tbl_periodos_escolares     @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_periodo")
+  tbl_alumnos_cursos        tbl_alumnos_cursos[]
+  tbl_sesiones_asistencia   tbl_sesiones_asistencia[]
+  tbl_esquemas_calificacion tbl_esquemas_calificacion[]
+  tbl_notas_cabecera        tbl_notas_cabecera[]
+  tbl_envios_whatsapp       tbl_envios_whatsapp[]
+  tbl_trivia_partidas       tbl_trivia_partidas[]
+}
+
+model tbl_alumnos {
+  id                      Int       @id @default(autoincrement())
+  id_docente              Int?
+  id_usuario              Int?      @unique
+  nombres                 String    @db.VarChar(100)
+  apellidos               String    @db.VarChar(100)
+  dni                     String?   @unique @db.VarChar(20)
+  fecha_nacimiento        DateTime? @db.Date
+  genero                  String?   @db.VarChar(20)
+  direccion               String?
+  foto_url                String?
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_perfiles_docente       tbl_perfiles_docente?       @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_docente")
+  tbl_usuarios               tbl_usuarios?               @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_usuario")
+  tbl_alumnos_cursos         tbl_alumnos_cursos[]
+  tbl_carnets_alumnos        tbl_carnets_alumnos[]
+  tbl_qr_alumnos             tbl_qr_alumnos[]
+  tbl_padres_alumnos         tbl_padres_alumnos[]
+  tbl_registros_asistencia   tbl_registros_asistencia[]
+  tbl_notas_cabecera         tbl_notas_cabecera[]
+  tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
+  tbl_trivia_participantes   tbl_trivia_participantes[]
+  tbl_trivia_sesiones        tbl_trivia_sesiones[]
+}
+
+model tbl_alumnos_cursos {
+  id                      Int       @id @default(autoincrement())
+  id_curso                Int
+  id_alumno               Int
+  fecha_asignacion        DateTime? @default(now()) @db.Timestamptz(6)
+  fecha_retiro            DateTime? @db.Timestamptz(6)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_cursos  tbl_cursos  @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_cursos_curso")
+  tbl_alumnos tbl_alumnos @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_cursos_alumno")
+
+  @@unique([id_curso, id_alumno], map: "uq_alumno_curso")
+}
+
+// =============================================
+// CAPA 3: CARNETS Y QR
+// =============================================
+
+model tbl_carnets_alumnos {
+  id                      Int       @id @default(autoincrement())
+  id_alumno               Int
+  codigo_carnet           String    @db.VarChar(100)
+  url_archivo_carnet      String?
+  esta_activo             Boolean   @default(true)
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_registro     Int?
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_alumnos tbl_alumnos @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_carnets_alumno")
+}
+
+model tbl_qr_alumnos {
+  id                      Int       @id @default(autoincrement())
+  id_alumno               Int
+  valor_qr                String    @db.VarChar(200)
+  url_archivo_qr          String?
+  esta_activo             Boolean   @default(true)
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_registro     Int?
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_alumnos tbl_alumnos @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_qr_alumno")
+}
+
+// =============================================
+// CAPA 3: RELACIÓN FAMILIAR/CONTACTO
+// =============================================
+
+model tbl_padres {
+  id                      Int       @id @default(autoincrement())
+  id_docente              Int
+  nombres                 String    @db.VarChar(100)
+  apellidos               String    @db.VarChar(100)
+  telefono                String?   @db.VarChar(20)
+  correo                  String?   @db.VarChar(150)
+  es_contacto_principal   Boolean   @default(false)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_perfiles_docente        tbl_perfiles_docente          @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_padres_docente")
+  tbl_padres_alumnos          tbl_padres_alumnos[]
+  tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
+}
+
+model tbl_padres_alumnos {
+  id                      Int       @id @default(autoincrement())
+  id_alumno               Int
+  id_padre                Int
+  parentesco              String?   @db.VarChar(50)
+  es_principal            Boolean   @default(false)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_alumnos tbl_alumnos @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_padres_alumnos_alumno")
+  tbl_padres  tbl_padres  @relation(fields: [id_padre], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_padres_alumnos_padre")
+}
+
+// =============================================
+// CAPA 4: OPERACIÓN ESCOLAR DIARIA - ASISTENCIA
+// =============================================
+
+model tbl_sesiones_asistencia {
+  id                      Int       @id @default(autoincrement())
+  id_curso                Int
+  id_docente              Int
+  id_periodo_escolar      Int
+  fecha_asistencia        DateTime  @db.Date
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_cursos               tbl_cursos               @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_curso")
+  tbl_perfiles_docente     tbl_perfiles_docente     @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_docente")
+  tbl_periodos_escolares   tbl_periodos_escolares   @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_periodo")
+  tbl_registros_asistencia tbl_registros_asistencia[]
+
+  @@unique([id_curso, fecha_asistencia], map: "uq_sesion_curso_fecha")
+}
+
+model tbl_registros_asistencia {
+  id                      Int       @id @default(autoincrement())
+  id_sesion_asistencia    Int
+  id_alumno               Int
+  estado_asistencia       String    @db.VarChar(20) // presente, ausente, tardanza
+  modo_registro           String    @db.VarChar(20) // manual, qr
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_registro     Int?
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_sesiones_asistencia tbl_sesiones_asistencia @relation(fields: [id_sesion_asistencia], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_registros_asistencia_sesion")
+  tbl_alumnos             tbl_alumnos             @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_registros_asistencia_alumno")
+
+  @@unique([id_sesion_asistencia, id_alumno], map: "uq_asistencia_sesion_alumno")
+}
+
+// =============================================
+// CAPA 5: GESTIÓN ACADÉMICA DE CALIFICACIONES
+// =============================================
+
+model tbl_esquemas_calificacion {
+  id                      Int       @id @default(autoincrement())
+  id_docente              Int
+  id_curso                Int
+  id_periodo_escolar      Int
+  tipo_calificacion       String    @db.VarChar(20) // numerico, letras
+  escala_letras           String?   @db.Text // JSON array, ej: ["AD","A","B","C"]
+  formula                 String?   @db.Text
+  modo_nota_final         String    @db.VarChar(20) // calculado, manual
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_perfiles_docente        tbl_perfiles_docente         @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_docente")
+  tbl_cursos                  tbl_cursos                   @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_curso")
+  tbl_periodos_escolares      tbl_periodos_escolares       @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_periodo")
+  tbl_periodos_calificacion   tbl_periodos_calificacion[]
+  tbl_componentes_nota        tbl_componentes_nota[]
+  tbl_notas_cabecera          tbl_notas_cabecera[]
+}
+
+model tbl_periodos_calificacion {
+  id                      Int       @id @default(autoincrement())
+  id_esquema_calificacion Int
+  nombre                  String    @db.VarChar(50)
+  orden                   Int
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_esquemas_calificacion tbl_esquemas_calificacion @relation(fields: [id_esquema_calificacion], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_periodos_calificacion_esquema")
+  tbl_notas_cabecera        tbl_notas_cabecera[]
+}
+
+model tbl_componentes_nota {
+  id                      Int       @id @default(autoincrement())
+  id_esquema_calificacion Int
+  nombre_componente       String    @db.VarChar(100)
+  peso_porcentaje         Decimal?  @db.Decimal(5, 2)
+  orden                   Int
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_esquemas_calificacion tbl_esquemas_calificacion @relation(fields: [id_esquema_calificacion], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_componentes_nota_esquema")
+  tbl_notas_detalle         tbl_notas_detalle[]
+}
+
+model tbl_notas_cabecera {
+  id                      Int       @id @default(autoincrement())
+  id_alumno               Int
+  id_curso                Int
+  id_periodo_escolar      Int
+  id_periodo_calificacion Int
+  id_esquema_calificacion Int
+  nota_final_numerica     Decimal?  @db.Decimal(5, 2)
+  nota_final_letra        String?   @db.VarChar(5)
+  nota_final_manual       Boolean   @default(false)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_alumnos               tbl_alumnos               @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_cabecera_alumno")
+  tbl_cursos                tbl_cursos                @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_cabecera_curso")
+  tbl_periodos_escolares    tbl_periodos_escolares    @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_cabecera_periodo_escolar")
+  tbl_periodos_calificacion tbl_periodos_calificacion @relation(fields: [id_periodo_calificacion], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_cabecera_periodo_calificacion")
+  tbl_esquemas_calificacion tbl_esquemas_calificacion @relation(fields: [id_esquema_calificacion], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_cabecera_esquema")
+  tbl_notas_detalle         tbl_notas_detalle[]
+}
+
+model tbl_notas_detalle {
+  id                      Int       @id @default(autoincrement())
+  id_nota_cabecera        Int
+  id_componente_nota      Int
+  valor_numerico          Decimal?  @db.Decimal(5, 2)
+  valor_letra             String?   @db.VarChar(5)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_notas_cabecera   tbl_notas_cabecera   @relation(fields: [id_nota_cabecera], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_detalle_cabecera")
+  tbl_componentes_nota tbl_componentes_nota @relation(fields: [id_componente_nota], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notas_detalle_componente")
+}
+
+// =============================================
+// CAPA 6: WHATSAPP
+// =============================================
+
+model tbl_envios_whatsapp {
+  id                      Int       @id @default(autoincrement())
+  id_curso                Int
+  id_periodo_escolar      Int
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado_envio            String    @db.VarChar(20)
+  tipo_envio              String    @default("reporte_general") @db.VarChar(50)
+  estado                  Int       @default(1)
+
+  tbl_cursos                  tbl_cursos                    @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_curso")
+  tbl_periodos_escolares      tbl_periodos_escolares        @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_periodo")
+  tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
+}
+
+model tbl_envios_whatsapp_detalle {
+  id                      Int       @id @default(autoincrement())
+  id_envio_whatsapp       Int
+  id_alumno               Int
+  id_padre                Int?
+  telefono                String?   @db.VarChar(20)
+  contenido_mensaje       String    @db.Text
+  estado_envio            String    @db.VarChar(20) // enviado, no_enviado
+  mensaje_error           String?   @db.Text
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_registro     Int?
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_envios_whatsapp tbl_envios_whatsapp @relation(fields: [id_envio_whatsapp], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_envio")
+  tbl_alumnos         tbl_alumnos         @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_alumno")
+  tbl_padres          tbl_padres?         @relation(fields: [id_padre], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_padre")
+}
+
+// =============================================
+// CAPA 6: GAMIFICACIÓN - TRIVIA
+// =============================================
+
+model tbl_trivia_temas {
+  id                      Int       @id @default(autoincrement())
+  id_docente              Int?
+  nombre                  String    @db.VarChar(200)
+  descripcion             String?
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_perfiles_docente  tbl_perfiles_docente?  @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_temas_docente")
+  tbl_trivia_preguntas  tbl_trivia_preguntas[]
+  tbl_trivia_partidas   tbl_trivia_partidas[]
+}
+
+model tbl_trivia_preguntas {
+  id                      Int       @id @default(autoincrement())
+  id_tema                 Int
+  texto_pregunta          String    @db.Text
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_trivia_temas              tbl_trivia_temas               @relation(fields: [id_tema], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_preguntas_tema")
+  tbl_trivia_opciones           tbl_trivia_opciones[]
+  tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas[]
+}
+
+model tbl_trivia_opciones {
+  id                      Int       @id @default(autoincrement())
+  id_pregunta             Int
+  texto_opcion            String    @db.Text
+  es_correcta             Boolean   @default(false)
+  orden                   Int
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_trivia_preguntas  tbl_trivia_preguntas   @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_opciones_pregunta")
+  tbl_trivia_respuestas tbl_trivia_respuestas[]
+}
+
+model tbl_trivia_partidas {
+  id                        Int       @id @default(autoincrement())
+  id_docente                Int?
+  id_curso                  Int
+  id_periodo_escolar        Int
+  id_tema                   Int
+  modalidad                 String    @db.VarChar(20) // individual, parejas, grupos
+  cantidad_grupos           Int?
+  cantidad_preguntas        Int
+  tiempo_por_pregunta       Int       @default(20)
+  puntaje_correcto          Decimal   @default(1.2) @db.Decimal(4, 2)
+  puntaje_incorrecto        Decimal   @default(-0.4) @db.Decimal(4, 2)
+  estado_partida            String    @db.VarChar(20) // preparada, en_progreso, finalizada, cancelada
+  modo_ganador              String?   @db.VarChar(20) // unico, multiple
+  // --- Trivia Publica (con_codigo) ---
+  modalidad_acceso          String    @default("en_vivo") @db.VarChar(20) // en_vivo, con_codigo (ortogonal a modalidad de juego)
+  codigo_acceso             String?   @db.VarChar(20) // TRV-XXXX, sin @unique global — unicidad por app contra activas
+  max_intentos              Int       @default(1)
+  mostrar_puntaje           Boolean   @default(true)
+  mostrar_resumen           Boolean   @default(false)
+  mostrar_ranking           Boolean   @default(false)
+  fecha_hora_inicio         DateTime? @db.Timestamptz(6)
+  fecha_hora_fin            DateTime? @db.Timestamptz(6)
+  id_usuario_registro       Int?
+  fecha_hora_registro       DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion   Int?
+  fecha_hora_modificacion   DateTime? @db.Timestamptz(6)
+  estado                    Int       @default(1)
+
+  tbl_perfiles_docente          tbl_perfiles_docente?          @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_docente")
+  tbl_cursos                    tbl_cursos                     @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_curso")
+  tbl_periodos_escolares        tbl_periodos_escolares         @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_periodo")
+  tbl_trivia_temas              tbl_trivia_temas               @relation(fields: [id_tema], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_tema")
+  tbl_trivia_participantes      tbl_trivia_participantes[]
+  tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas[]
+  tbl_trivia_sesiones           tbl_trivia_sesiones[]
+}
+
+model tbl_trivia_participantes {
+  id                      Int       @id @default(autoincrement())
+  id_partida              Int
+  tipo_participante       String    @db.VarChar(20) // alumno, equipo
+  id_alumno               Int?
+  etiqueta_participante   String    @db.VarChar(100)
+  numero_equipo           Int?
+  puntaje_final           Decimal   @default(0) @db.Decimal(8, 2)
+  es_ganador              Boolean   @default(false)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_trivia_partidas   tbl_trivia_partidas    @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_partida")
+  tbl_alumnos           tbl_alumnos?           @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_alumno")
+  tbl_trivia_respuestas tbl_trivia_respuestas[]
+}
+
+model tbl_trivia_partidas_preguntas {
+  id                      Int       @id @default(autoincrement())
+  id_partida              Int
+  id_pregunta             Int
+  orden                   Int
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+
+  tbl_trivia_partidas   tbl_trivia_partidas    @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_preguntas_partida")
+  tbl_trivia_preguntas  tbl_trivia_preguntas   @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_preguntas_pregunta")
+  tbl_trivia_respuestas tbl_trivia_respuestas[]
+}
+
+model tbl_trivia_respuestas {
+  id                        Int       @id @default(autoincrement())
+  id_partida_pregunta       Int
+  id_participante           Int
+  id_opcion_seleccionada    Int?
+  es_correcta               Boolean   @default(false)
+  delta_puntaje             Decimal   @default(0) @db.Decimal(4, 2)
+  fecha_hora_respuesta      DateTime? @db.Timestamptz(6)
+
+  tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas @relation(fields: [id_partida_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_respuestas_partida_pregunta")
+  tbl_trivia_participantes      tbl_trivia_participantes      @relation(fields: [id_participante], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_respuestas_participante")
+  tbl_trivia_opciones           tbl_trivia_opciones?          @relation(fields: [id_opcion_seleccionada], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_respuestas_opcion")
+}
+
+model tbl_trivia_sesiones {
+  id                  Int       @id @default(autoincrement())
+  id_partida          Int
+  id_alumno           Int
+  id_participante     Int?
+  numero_intento      Int
+  pregunta_actual     Int       @default(0)
+  puntaje_acumulado   Decimal   @default(0) @db.Decimal(10, 2)
+  estado_sesion       String    @default("en_progreso") @db.VarChar(20) // en_progreso, finalizada, abandonada
+  token_sesion        String    @unique @db.VarChar(500)
+  fecha_hora_inicio   DateTime  @default(now()) @db.Timestamptz(6)
+  fecha_hora_fin      DateTime? @db.Timestamptz(6)
+  estado              Int       @default(1)
+
+  tbl_trivia_partidas tbl_trivia_partidas @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_sesiones_partida")
+  tbl_alumnos         tbl_alumnos         @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_sesiones_alumno")
+
+  @@unique([id_partida, id_alumno, numero_intento], map: "uq_sesion_partida_alumno_intento")
+}
+
+// =============================================
+// CAPA 7: TRAZABILIDAD
+// =============================================
+
+model tbl_auditoria {
+  id                Int       @id @default(autoincrement())
+  id_usuario        Int?
+  nombre_entidad    String    @db.VarChar(100)
+  id_entidad        Int?
+  tipo_accion       String    @db.VarChar(50) // crear, actualizar, inactivar, login, enviar, recalcular, otro
+  datos_anteriores  Json?
+  datos_nuevos      Json?
+  fecha_hora_registro DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+// =============================================
+// CAPA 8: PODCAST
+// =============================================
+
+model tbl_podcast_config {
+  id                      Int       @id @default(autoincrement())
+  logo_url                String?   @db.VarChar(500)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+}
+
+model tbl_podcast_categorias {
+  id                      Int       @id @default(autoincrement())
+  nombre                  String    @db.VarChar(100)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+  tbl_podcasts            tbl_podcasts[]
+}
+
+model tbl_podcasts {
+  id                      Int       @id @default(autoincrement())
+  titulo                  String    @db.VarChar(255)
+  descripcion             String?   @db.Text
+  url                     String    @db.VarChar(500)
+  tipo                    String    @db.VarChar(20)
+  id_categoria            Int?
+  fecha_publicacion       DateTime? @db.Date
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_podcast_categorias  tbl_podcast_categorias? @relation(fields: [id_categoria], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_podcasts_categorias")
+}
+
+// =============================================
+// CAPA 9: BIBLIOTECA DIGITAL
+// =============================================
+
+model tbl_biblioteca_categorias {
+  id                      Int       @id @default(autoincrement())
+  nombre                  String    @db.VarChar(100)
+  descripcion             String?   @db.Text
+  icono                   String?   @db.VarChar(50)
+  color                   String?   @db.VarChar(20)
+  orden                   Int       @default(0)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_biblioteca_materiales tbl_biblioteca_materiales[]
+}
+
+model tbl_biblioteca_materiales {
+  id                        Int       @id @default(autoincrement())
+  id_categoria              Int?
+  titulo                    String    @db.VarChar(255)
+  descripcion               String?   @db.Text
+  nombre_archivo_original   String    @db.VarChar(500)
+  ruta_archivo              String    @db.VarChar(500)
+  tipo_mime                 String    @db.VarChar(100)
+  extension                 String    @db.VarChar(20)
+  tamano_bytes              BigInt
+  total_descargas           Int       @default(0)
+  id_usuario_registro       Int?
+  fecha_hora_registro       DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion   Int?
+  fecha_hora_modificacion   DateTime? @db.Timestamptz(6)
+  estado                    Int       @default(1)
+
+  tbl_biblioteca_categorias tbl_biblioteca_categorias? @relation(fields: [id_categoria], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_biblioteca_materiales_categoria")
+}
