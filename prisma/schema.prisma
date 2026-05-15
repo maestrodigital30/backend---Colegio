@@ -156,14 +156,15 @@ model tbl_cursos {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_perfiles_docente      tbl_perfiles_docente        @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_docente")
-  tbl_periodos_escolares    tbl_periodos_escolares      @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_periodo")
-  tbl_alumnos_cursos        tbl_alumnos_cursos[]
-  tbl_sesiones_asistencia   tbl_sesiones_asistencia[]
-  tbl_esquemas_calificacion tbl_esquemas_calificacion[]
-  tbl_notas_cabecera        tbl_notas_cabecera[]
-  tbl_envios_whatsapp       tbl_envios_whatsapp[]
-  tbl_trivia_partidas       tbl_trivia_partidas[]
+  tbl_perfiles_docente        tbl_perfiles_docente          @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_docente")
+  tbl_periodos_escolares      tbl_periodos_escolares        @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_periodo")
+  tbl_alumnos_cursos          tbl_alumnos_cursos[]
+  tbl_sesiones_asistencia     tbl_sesiones_asistencia[]
+  tbl_esquemas_calificacion   tbl_esquemas_calificacion[]
+  tbl_notas_cabecera          tbl_notas_cabecera[]
+  tbl_envios_whatsapp         tbl_envios_whatsapp[]
+  tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
+  tbl_trivia_partidas         tbl_trivia_partidas[]
 }
 
 model tbl_alumnos {
@@ -471,8 +472,10 @@ model tbl_notas_detalle {
 
 model tbl_envios_whatsapp {
   id                      Int       @id @default(autoincrement())
-  id_curso                Int
+  id_curso                Int?
   id_periodo_escolar      Int
+  grado                   String?   @db.VarChar(20)
+  secciones               String?   @db.VarChar(200)
   id_usuario_registro     Int?
   fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
   id_usuario_modificacion Int?
@@ -481,7 +484,7 @@ model tbl_envios_whatsapp {
   tipo_envio              String    @default("reporte_general") @db.VarChar(50)
   estado                  Int       @default(1)
 
-  tbl_cursos                  tbl_cursos                    @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_curso")
+  tbl_cursos                  tbl_cursos?                   @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_curso")
   tbl_periodos_escolares      tbl_periodos_escolares        @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_periodo")
   tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
 }
@@ -490,6 +493,7 @@ model tbl_envios_whatsapp_detalle {
   id                      Int       @id @default(autoincrement())
   id_envio_whatsapp       Int
   id_alumno               Int
+  id_curso                Int?
   id_padre                Int?
   telefono                String?   @db.VarChar(20)
   contenido_mensaje       String    @db.Text
@@ -503,6 +507,7 @@ model tbl_envios_whatsapp_detalle {
 
   tbl_envios_whatsapp tbl_envios_whatsapp @relation(fields: [id_envio_whatsapp], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_envio")
   tbl_alumnos         tbl_alumnos         @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_alumno")
+  tbl_cursos          tbl_cursos?         @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_curso")
   tbl_padres          tbl_padres?         @relation(fields: [id_padre], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_envios_whatsapp_detalle_padre")
 }
 

@@ -1,9 +1,0 @@
-# Garantiza tzdata en el contenedor Railway y deja TZ por defecto
-# (la variable TZ en Railway → Variables del servicio sigue siendo la fuente
-#  de verdad si se necesita sobreescribir).
-[phases.setup]
-nixPkgs = ["nodejs_18", "openssl", "tzdata"]
-
-[variables]
-TZ = "America/Lima"
-PGTZ = "America/Lima"
