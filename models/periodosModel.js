@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { parseFechaCalendario } = require('../utils/fechas');
 
 const obtenerTodos = async () => {
   return prisma.tbl_periodos_escolares.findMany({
@@ -15,8 +16,8 @@ const crear = async (datos, userId) => {
     data: {
       nombre: datos.nombre,
       anio: datos.anio || null,
-      fecha_inicio: new Date(datos.fecha_inicio),
-      fecha_fin: new Date(datos.fecha_fin),
+      fecha_inicio: parseFechaCalendario(datos.fecha_inicio),
+      fecha_fin: parseFechaCalendario(datos.fecha_fin),
       id_usuario_registro: userId,
     },
   });
@@ -28,8 +29,8 @@ const actualizar = async (id, datos, userId) => {
     data: {
       nombre: datos.nombre,
       anio: datos.anio || null,
-      fecha_inicio: new Date(datos.fecha_inicio),
-      fecha_fin: new Date(datos.fecha_fin),
+      fecha_inicio: parseFechaCalendario(datos.fecha_inicio),
+      fecha_fin: parseFechaCalendario(datos.fecha_fin),
       id_usuario_modificacion: userId,
       fecha_hora_modificacion: new Date(),
     },

@@ -2,6 +2,7 @@ const prisma = require('../config/prisma');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const { getAlumnoRolId } = require('../utils/roles');
+const { parseFechaCalendario } = require('../utils/fechas');
 
 const obtenerTodos = async (filtros = {}) => {
   const where = {};
@@ -88,7 +89,7 @@ const crear = async (datos, userId) => {
       nombres: datos.nombres,
       apellidos: datos.apellidos,
       dni: datos.dni || null,
-      fecha_nacimiento: datos.fecha_nacimiento ? new Date(datos.fecha_nacimiento) : null,
+      fecha_nacimiento: parseFechaCalendario(datos.fecha_nacimiento),
       genero: datos.genero || null,
       direccion: datos.direccion || null,
       id_usuario_registro: userId,
@@ -148,7 +149,7 @@ const actualizar = async (id, datos, userId) => {
         nombres: datos.nombres,
         apellidos: datos.apellidos,
         dni: datos.dni || null,
-        fecha_nacimiento: datos.fecha_nacimiento ? new Date(datos.fecha_nacimiento) : null,
+        fecha_nacimiento: parseFechaCalendario(datos.fecha_nacimiento),
         genero: datos.genero || null,
         direccion: datos.direccion || null,
         id_usuario_modificacion: userId,

@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 const registrarAuditoria = async ({ id_usuario, nombre_entidad, id_entidad, tipo_accion, datos_anteriores = null, datos_nuevos = null }) => {
   try {

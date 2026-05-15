@@ -66,9 +66,9 @@ model tbl_usuarios {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_roles            tbl_roles             @relation(fields: [id_rol], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuarios_roles")
-  tbl_perfil_docente   tbl_perfiles_docente?
-  tbl_alumno           tbl_alumnos?
+  tbl_roles          tbl_roles             @relation(fields: [id_rol], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuarios_roles")
+  tbl_perfil_docente tbl_perfiles_docente?
+  tbl_alumno         tbl_alumnos?
 }
 
 model tbl_perfiles_docente {
@@ -85,7 +85,7 @@ model tbl_perfiles_docente {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_usuarios              tbl_usuarios               @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_perfil_docente_usuario")
+  tbl_usuarios              tbl_usuarios                @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_perfil_docente_usuario")
   tbl_cursos                tbl_cursos[]
   tbl_alumnos               tbl_alumnos[]
   tbl_padres                tbl_padres[]
@@ -156,8 +156,8 @@ model tbl_cursos {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_perfiles_docente      tbl_perfiles_docente       @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_docente")
-  tbl_periodos_escolares    tbl_periodos_escolares     @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_periodo")
+  tbl_perfiles_docente      tbl_perfiles_docente        @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_docente")
+  tbl_periodos_escolares    tbl_periodos_escolares      @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cursos_periodo")
   tbl_alumnos_cursos        tbl_alumnos_cursos[]
   tbl_sesiones_asistencia   tbl_sesiones_asistencia[]
   tbl_esquemas_calificacion tbl_esquemas_calificacion[]
@@ -183,17 +183,55 @@ model tbl_alumnos {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_perfiles_docente       tbl_perfiles_docente?       @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_docente")
-  tbl_usuarios               tbl_usuarios?               @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_usuario")
-  tbl_alumnos_cursos         tbl_alumnos_cursos[]
-  tbl_carnets_alumnos        tbl_carnets_alumnos[]
-  tbl_qr_alumnos             tbl_qr_alumnos[]
-  tbl_padres_alumnos         tbl_padres_alumnos[]
-  tbl_registros_asistencia   tbl_registros_asistencia[]
-  tbl_notas_cabecera         tbl_notas_cabecera[]
-  tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
-  tbl_trivia_participantes   tbl_trivia_participantes[]
-  tbl_trivia_sesiones        tbl_trivia_sesiones[]
+  tbl_perfiles_docente             tbl_perfiles_docente?              @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_docente")
+  tbl_usuarios                     tbl_usuarios?                      @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_alumnos_usuario")
+  tbl_alumnos_cursos               tbl_alumnos_cursos[]
+  tbl_carnets_alumnos              tbl_carnets_alumnos[]
+  tbl_qr_alumnos                   tbl_qr_alumnos[]
+  tbl_padres_alumnos               tbl_padres_alumnos[]
+  tbl_registros_asistencia         tbl_registros_asistencia[]
+  tbl_notas_cabecera               tbl_notas_cabecera[]
+  tbl_envios_whatsapp_detalle      tbl_envios_whatsapp_detalle[]
+  tbl_trivia_participantes         tbl_trivia_participantes[]
+  tbl_trivia_sesiones              tbl_trivia_sesiones[]
+  tbl_datos_antropometricos_alumno tbl_datos_antropometricos_alumno[]
+}
+
+// =============================================
+// CAPA 3.5: DATOS ANTROPOMÉTRICOS / SALUD DEL ALUMNO
+// =============================================
+
+model tbl_tipos_dato_antropometrico {
+  id                      Int       @id @default(autoincrement())
+  nombre                  String    @unique @db.VarChar(100)
+  tipo_valor              String    @db.VarChar(20) // numerico, texto
+  unidad                  String?   @db.VarChar(20)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_datos_antropometricos_alumno tbl_datos_antropometricos_alumno[]
+}
+
+model tbl_datos_antropometricos_alumno {
+  id                          Int       @id @default(autoincrement())
+  id_alumno                   Int
+  id_tipo_dato_antropometrico Int
+  valor_numerico              Decimal?  @db.Decimal(10, 2)
+  valor_texto                 String?   @db.Text
+  descripcion                 String?   @db.Text
+  id_usuario_registro         Int?
+  fecha_hora_registro         DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion     Int?
+  fecha_hora_modificacion     DateTime? @db.Timestamptz(6)
+  estado                      Int       @default(1)
+
+  tbl_alumnos                   tbl_alumnos                   @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_datos_antropometricos_alumno")
+  tbl_tipos_dato_antropometrico tbl_tipos_dato_antropometrico @relation(fields: [id_tipo_dato_antropometrico], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_datos_antropometricos_tipo")
+
+  @@unique([id_alumno, id_tipo_dato_antropometrico], map: "uq_dato_antropometrico_alumno_tipo")
 }
 
 model tbl_alumnos_cursos {
@@ -303,9 +341,9 @@ model tbl_sesiones_asistencia {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_cursos               tbl_cursos               @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_curso")
-  tbl_perfiles_docente     tbl_perfiles_docente     @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_docente")
-  tbl_periodos_escolares   tbl_periodos_escolares   @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_periodo")
+  tbl_cursos               tbl_cursos                 @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_curso")
+  tbl_perfiles_docente     tbl_perfiles_docente       @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_docente")
+  tbl_periodos_escolares   tbl_periodos_escolares     @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sesiones_asistencia_periodo")
   tbl_registros_asistencia tbl_registros_asistencia[]
 
   @@unique([id_curso, fecha_asistencia], map: "uq_sesion_curso_fecha")
@@ -348,12 +386,12 @@ model tbl_esquemas_calificacion {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_perfiles_docente        tbl_perfiles_docente         @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_docente")
-  tbl_cursos                  tbl_cursos                   @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_curso")
-  tbl_periodos_escolares      tbl_periodos_escolares       @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_periodo")
-  tbl_periodos_calificacion   tbl_periodos_calificacion[]
-  tbl_componentes_nota        tbl_componentes_nota[]
-  tbl_notas_cabecera          tbl_notas_cabecera[]
+  tbl_perfiles_docente      tbl_perfiles_docente        @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_docente")
+  tbl_cursos                tbl_cursos                  @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_curso")
+  tbl_periodos_escolares    tbl_periodos_escolares      @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_esquemas_calificacion_periodo")
+  tbl_periodos_calificacion tbl_periodos_calificacion[]
+  tbl_componentes_nota      tbl_componentes_nota[]
+  tbl_notas_cabecera        tbl_notas_cabecera[]
 }
 
 model tbl_periodos_calificacion {
@@ -483,9 +521,9 @@ model tbl_trivia_temas {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_perfiles_docente  tbl_perfiles_docente?  @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_temas_docente")
-  tbl_trivia_preguntas  tbl_trivia_preguntas[]
-  tbl_trivia_partidas   tbl_trivia_partidas[]
+  tbl_perfiles_docente tbl_perfiles_docente?  @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_temas_docente")
+  tbl_trivia_preguntas tbl_trivia_preguntas[]
+  tbl_trivia_partidas  tbl_trivia_partidas[]
 }
 
 model tbl_trivia_preguntas {
@@ -498,7 +536,7 @@ model tbl_trivia_preguntas {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_trivia_temas              tbl_trivia_temas               @relation(fields: [id_tema], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_preguntas_tema")
+  tbl_trivia_temas              tbl_trivia_temas                @relation(fields: [id_tema], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_preguntas_tema")
   tbl_trivia_opciones           tbl_trivia_opciones[]
   tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas[]
 }
@@ -515,43 +553,43 @@ model tbl_trivia_opciones {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_trivia_preguntas  tbl_trivia_preguntas   @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_opciones_pregunta")
+  tbl_trivia_preguntas  tbl_trivia_preguntas    @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_opciones_pregunta")
   tbl_trivia_respuestas tbl_trivia_respuestas[]
 }
 
 model tbl_trivia_partidas {
-  id                        Int       @id @default(autoincrement())
-  id_docente                Int?
-  id_curso                  Int
-  id_periodo_escolar        Int
-  id_tema                   Int
-  modalidad                 String    @db.VarChar(20) // individual, parejas, grupos
-  cantidad_grupos           Int?
-  cantidad_preguntas        Int
-  tiempo_por_pregunta       Int       @default(20)
-  puntaje_correcto          Decimal   @default(1.2) @db.Decimal(4, 2)
-  puntaje_incorrecto        Decimal   @default(-0.4) @db.Decimal(4, 2)
-  estado_partida            String    @db.VarChar(20) // preparada, en_progreso, finalizada, cancelada
-  modo_ganador              String?   @db.VarChar(20) // unico, multiple
+  id                      Int       @id @default(autoincrement())
+  id_docente              Int?
+  id_curso                Int
+  id_periodo_escolar      Int
+  id_tema                 Int
+  modalidad               String    @db.VarChar(20) // individual, parejas, grupos
+  cantidad_grupos         Int?
+  cantidad_preguntas      Int
+  tiempo_por_pregunta     Int       @default(20)
+  puntaje_correcto        Decimal   @default(1.2) @db.Decimal(4, 2)
+  puntaje_incorrecto      Decimal   @default(-0.4) @db.Decimal(4, 2)
+  estado_partida          String    @db.VarChar(20) // preparada, en_progreso, finalizada, cancelada
+  modo_ganador            String?   @db.VarChar(20) // unico, multiple
   // --- Trivia Publica (con_codigo) ---
-  modalidad_acceso          String    @default("en_vivo") @db.VarChar(20) // en_vivo, con_codigo (ortogonal a modalidad de juego)
-  codigo_acceso             String?   @db.VarChar(20) // TRV-XXXX, sin @unique global — unicidad por app contra activas
-  max_intentos              Int       @default(1)
-  mostrar_puntaje           Boolean   @default(true)
-  mostrar_resumen           Boolean   @default(false)
-  mostrar_ranking           Boolean   @default(false)
-  fecha_hora_inicio         DateTime? @db.Timestamptz(6)
-  fecha_hora_fin            DateTime? @db.Timestamptz(6)
-  id_usuario_registro       Int?
-  fecha_hora_registro       DateTime? @default(now()) @db.Timestamptz(6)
-  id_usuario_modificacion   Int?
-  fecha_hora_modificacion   DateTime? @db.Timestamptz(6)
-  estado                    Int       @default(1)
+  modalidad_acceso        String    @default("en_vivo") @db.VarChar(20) // en_vivo, con_codigo (ortogonal a modalidad de juego)
+  codigo_acceso           String?   @db.VarChar(20) // TRV-XXXX, sin @unique global — unicidad por app contra activas
+  max_intentos            Int       @default(1)
+  mostrar_puntaje         Boolean   @default(true)
+  mostrar_resumen         Boolean   @default(false)
+  mostrar_ranking         Boolean   @default(false)
+  fecha_hora_inicio       DateTime? @db.Timestamptz(6)
+  fecha_hora_fin          DateTime? @db.Timestamptz(6)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
 
-  tbl_perfiles_docente          tbl_perfiles_docente?          @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_docente")
-  tbl_cursos                    tbl_cursos                     @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_curso")
-  tbl_periodos_escolares        tbl_periodos_escolares         @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_periodo")
-  tbl_trivia_temas              tbl_trivia_temas               @relation(fields: [id_tema], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_tema")
+  tbl_perfiles_docente          tbl_perfiles_docente?           @relation(fields: [id_docente], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_docente")
+  tbl_cursos                    tbl_cursos                      @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_curso")
+  tbl_periodos_escolares        tbl_periodos_escolares          @relation(fields: [id_periodo_escolar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_periodo")
+  tbl_trivia_temas              tbl_trivia_temas                @relation(fields: [id_tema], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_tema")
   tbl_trivia_participantes      tbl_trivia_participantes[]
   tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas[]
   tbl_trivia_sesiones           tbl_trivia_sesiones[]
@@ -572,31 +610,31 @@ model tbl_trivia_participantes {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_trivia_partidas   tbl_trivia_partidas    @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_partida")
-  tbl_alumnos           tbl_alumnos?           @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_alumno")
+  tbl_trivia_partidas   tbl_trivia_partidas     @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_partida")
+  tbl_alumnos           tbl_alumnos?            @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_alumno")
   tbl_trivia_respuestas tbl_trivia_respuestas[]
 }
 
 model tbl_trivia_partidas_preguntas {
-  id                      Int       @id @default(autoincrement())
-  id_partida              Int
-  id_pregunta             Int
-  orden                   Int
-  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id                  Int       @id @default(autoincrement())
+  id_partida          Int
+  id_pregunta         Int
+  orden               Int
+  fecha_hora_registro DateTime? @default(now()) @db.Timestamptz(6)
 
-  tbl_trivia_partidas   tbl_trivia_partidas    @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_preguntas_partida")
-  tbl_trivia_preguntas  tbl_trivia_preguntas   @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_preguntas_pregunta")
+  tbl_trivia_partidas   tbl_trivia_partidas     @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_preguntas_partida")
+  tbl_trivia_preguntas  tbl_trivia_preguntas    @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_preguntas_pregunta")
   tbl_trivia_respuestas tbl_trivia_respuestas[]
 }
 
 model tbl_trivia_respuestas {
-  id                        Int       @id @default(autoincrement())
-  id_partida_pregunta       Int
-  id_participante           Int
-  id_opcion_seleccionada    Int?
-  es_correcta               Boolean   @default(false)
-  delta_puntaje             Decimal   @default(0) @db.Decimal(4, 2)
-  fecha_hora_respuesta      DateTime? @db.Timestamptz(6)
+  id                     Int       @id @default(autoincrement())
+  id_partida_pregunta    Int
+  id_participante        Int
+  id_opcion_seleccionada Int?
+  es_correcta            Boolean   @default(false)
+  delta_puntaje          Decimal   @default(0) @db.Decimal(4, 2)
+  fecha_hora_respuesta   DateTime? @db.Timestamptz(6)
 
   tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas @relation(fields: [id_partida_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_respuestas_partida_pregunta")
   tbl_trivia_participantes      tbl_trivia_participantes      @relation(fields: [id_participante], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_respuestas_participante")
@@ -604,18 +642,18 @@ model tbl_trivia_respuestas {
 }
 
 model tbl_trivia_sesiones {
-  id                  Int       @id @default(autoincrement())
-  id_partida          Int
-  id_alumno           Int
-  id_participante     Int?
-  numero_intento      Int
-  pregunta_actual     Int       @default(0)
-  puntaje_acumulado   Decimal   @default(0) @db.Decimal(10, 2)
-  estado_sesion       String    @default("en_progreso") @db.VarChar(20) // en_progreso, finalizada, abandonada
-  token_sesion        String    @unique @db.VarChar(500)
-  fecha_hora_inicio   DateTime  @default(now()) @db.Timestamptz(6)
-  fecha_hora_fin      DateTime? @db.Timestamptz(6)
-  estado              Int       @default(1)
+  id                Int       @id @default(autoincrement())
+  id_partida        Int
+  id_alumno         Int
+  id_participante   Int?
+  numero_intento    Int
+  pregunta_actual   Int       @default(0)
+  puntaje_acumulado Decimal   @default(0) @db.Decimal(10, 2)
+  estado_sesion     String    @default("en_progreso") @db.VarChar(20) // en_progreso, finalizada, abandonada
+  token_sesion      String    @unique @db.VarChar(500)
+  fecha_hora_inicio DateTime  @default(now()) @db.Timestamptz(6)
+  fecha_hora_fin    DateTime? @db.Timestamptz(6)
+  estado            Int       @default(1)
 
   tbl_trivia_partidas tbl_trivia_partidas @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_sesiones_partida")
   tbl_alumnos         tbl_alumnos         @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_sesiones_alumno")
@@ -628,13 +666,13 @@ model tbl_trivia_sesiones {
 // =============================================
 
 model tbl_auditoria {
-  id                Int       @id @default(autoincrement())
-  id_usuario        Int?
-  nombre_entidad    String    @db.VarChar(100)
-  id_entidad        Int?
-  tipo_accion       String    @db.VarChar(50) // crear, actualizar, inactivar, login, enviar, recalcular, otro
-  datos_anteriores  Json?
-  datos_nuevos      Json?
+  id                  Int       @id @default(autoincrement())
+  id_usuario          Int?
+  nombre_entidad      String    @db.VarChar(100)
+  id_entidad          Int?
+  tipo_accion         String    @db.VarChar(50) // crear, actualizar, inactivar, login, enviar, recalcular, otro
+  datos_anteriores    Json?
+  datos_nuevos        Json?
   fecha_hora_registro DateTime? @default(now()) @db.Timestamptz(6)
 }
 
@@ -653,13 +691,13 @@ model tbl_podcast_config {
 }
 
 model tbl_podcast_categorias {
-  id                      Int       @id @default(autoincrement())
-  nombre                  String    @db.VarChar(100)
+  id                      Int            @id @default(autoincrement())
+  nombre                  String         @db.VarChar(100)
   id_usuario_registro     Int?
-  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  fecha_hora_registro     DateTime?      @default(now()) @db.Timestamptz(6)
   id_usuario_modificacion Int?
-  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
-  estado                  Int       @default(1)
+  fecha_hora_modificacion DateTime?      @db.Timestamptz(6)
+  estado                  Int            @default(1)
   tbl_podcasts            tbl_podcasts[]
 }
 
@@ -677,7 +715,7 @@ model tbl_podcasts {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_podcast_categorias  tbl_podcast_categorias? @relation(fields: [id_categoria], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_podcasts_categorias")
+  tbl_podcast_categorias tbl_podcast_categorias? @relation(fields: [id_categoria], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_podcasts_categorias")
 }
 
 // =============================================
@@ -701,21 +739,21 @@ model tbl_biblioteca_categorias {
 }
 
 model tbl_biblioteca_materiales {
-  id                        Int       @id @default(autoincrement())
-  id_categoria              Int?
-  titulo                    String    @db.VarChar(255)
-  descripcion               String?   @db.Text
-  nombre_archivo_original   String    @db.VarChar(500)
-  ruta_archivo              String    @db.VarChar(500)
-  tipo_mime                 String    @db.VarChar(100)
-  extension                 String    @db.VarChar(20)
-  tamano_bytes              BigInt
-  total_descargas           Int       @default(0)
-  id_usuario_registro       Int?
-  fecha_hora_registro       DateTime? @default(now()) @db.Timestamptz(6)
-  id_usuario_modificacion   Int?
-  fecha_hora_modificacion   DateTime? @db.Timestamptz(6)
-  estado                    Int       @default(1)
+  id                      Int       @id @default(autoincrement())
+  id_categoria            Int?
+  titulo                  String    @db.VarChar(255)
+  descripcion             String?   @db.Text
+  nombre_archivo_original String    @db.VarChar(500)
+  ruta_archivo            String    @db.VarChar(500)
+  tipo_mime               String    @db.VarChar(100)
+  extension               String    @db.VarChar(20)
+  tamano_bytes            BigInt
+  total_descargas         Int       @default(0)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
 
   tbl_biblioteca_categorias tbl_biblioteca_categorias? @relation(fields: [id_categoria], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_biblioteca_materiales_categoria")
 }

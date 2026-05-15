@@ -71,6 +71,11 @@ const CODIGO_TRIVIA = {
   MAX_REINTENTOS: 5,
 };
 
+const TIPOS_VALOR_ANTROPOMETRICO = {
+  NUMERICO: 'numerico',
+  TEXTO: 'texto',
+};
+
 module.exports = {
   ROLES,
   ESTADOS_ASISTENCIA,
@@ -85,4 +90,5 @@ module.exports = {
   TIPOS_REPORTE_WHATSAPP,
   ESTADOS_ENVIO_WHATSAPP,
   CODIGO_TRIVIA,
+  TIPOS_VALOR_ANTROPOMETRICO,
 };

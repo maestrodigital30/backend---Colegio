@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { parseFechaCalendario } = require('../utils/fechas');
 
 // ─── CONFIG (Logo) ───
 
@@ -118,7 +119,7 @@ const crear = async (datos, userId) => {
       url: datos.url,
       tipo: datos.tipo,
       id_categoria: datos.id_categoria ? parseInt(datos.id_categoria) : null,
-      fecha_publicacion: datos.fecha_publicacion ? new Date(datos.fecha_publicacion + 'T12:00:00Z') : new Date(),
+      fecha_publicacion: parseFechaCalendario(datos.fecha_publicacion) || new Date(),
       id_usuario_registro: userId,
     },
   });
@@ -133,7 +134,7 @@ const actualizar = async (id, datos, userId) => {
       url: datos.url,
       tipo: datos.tipo,
       id_categoria: datos.id_categoria ? parseInt(datos.id_categoria) : null,
-      fecha_publicacion: datos.fecha_publicacion ? new Date(datos.fecha_publicacion + 'T12:00:00Z') : undefined,
+      fecha_publicacion: datos.fecha_publicacion ? parseFechaCalendario(datos.fecha_publicacion) : undefined,
       id_usuario_modificacion: userId,
       fecha_hora_modificacion: new Date(),
     },

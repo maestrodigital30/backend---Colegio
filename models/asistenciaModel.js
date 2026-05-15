@@ -1,11 +1,12 @@
 const prisma = require('../config/prisma');
 const { ESTADOS_ASISTENCIA, MODOS_REGISTRO_ASISTENCIA } = require('../utils/constants');
+const { parseFechaCalendario } = require('../utils/fechas');
 
 const obtenerSesion = async (idCurso, fecha) => {
   return prisma.tbl_sesiones_asistencia.findFirst({
     where: {
       id_curso: idCurso,
-      fecha_asistencia: new Date(fecha),
+      fecha_asistencia: parseFechaCalendario(fecha),
       estado: 1,
     },
     include: {
@@ -18,8 +19,9 @@ const obtenerSesion = async (idCurso, fecha) => {
 };
 
 const crearOObtenerSesion = async (idCurso, idDocente, idPeriodoEscolar, fecha, userId) => {
+  const fechaCal = parseFechaCalendario(fecha);
   const existente = await prisma.tbl_sesiones_asistencia.findFirst({
-    where: { id_curso: idCurso, fecha_asistencia: new Date(fecha), estado: 1 },
+    where: { id_curso: idCurso, fecha_asistencia: fechaCal, estado: 1 },
   });
 
   if (existente) return existente;
@@ -27,7 +29,7 @@ const crearOObtenerSesion = async (idCurso, idDocente, idPeriodoEscolar, fecha, 
   const data = {
     id_curso: idCurso,
     id_periodo_escolar: idPeriodoEscolar,
-    fecha_asistencia: new Date(fecha),
+    fecha_asistencia: fechaCal,
     id_usuario_registro: userId,
   };
   if (idDocente != null) data.id_docente = parseInt(idDocente);
@@ -137,7 +139,7 @@ const obtenerResumenAlumno = async (idAlumno, idCurso) => {
 
 const obtenerPresentesCurso = async (idCurso, fecha) => {
   const sesion = await prisma.tbl_sesiones_asistencia.findFirst({
-    where: { id_curso: idCurso, fecha_asistencia: new Date(fecha), estado: 1 },
+    where: { id_curso: idCurso, fecha_asistencia: parseFechaCalendario(fecha), estado: 1 },
   });
 
   if (!sesion) return [];
@@ -156,7 +158,7 @@ const obtenerPresentesCurso = async (idCurso, fecha) => {
 
 const obtenerAsistenciaDiaCurso = async (idCurso, fecha) => {
   const sesion = await prisma.tbl_sesiones_asistencia.findFirst({
-    where: { id_curso: idCurso, fecha_asistencia: new Date(fecha), estado: 1 },
+    where: { id_curso: idCurso, fecha_asistencia: parseFechaCalendario(fecha), estado: 1 },
     include: {
       tbl_registros_asistencia: {
         where: { estado: 1 },

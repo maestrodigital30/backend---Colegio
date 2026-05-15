@@ -38,6 +38,8 @@ app.use('/api/docentes', require('./routes/docentesRoutes'));
 app.use('/api/periodos', require('./routes/periodosRoutes'));
 app.use('/api/cursos', require('./routes/cursosRoutes'));
 app.use('/api/alumnos', require('./routes/alumnosRoutes'));
+app.use('/api/alumnos', require('./routes/datosAntropometricosRoutes'));
+app.use('/api/tipos-dato-antropometrico', require('./routes/tiposDatoAntropometricoRoutes'));
 app.use('/api/padres', require('./routes/padresRoutes'));
 app.use('/api/asistencia', require('./routes/asistenciaRoutes'));
 app.use('/api/config-academica', require('./routes/configAcademicaRoutes'));
@@ -49,9 +51,29 @@ app.use('/api/podcasts', require('./routes/podcastRoutes'));
 app.use('/api/biblioteca', require('./routes/bibliotecaRoutes'));
 app.use('/api/alumno-portal', require('./routes/alumnoPortalRoutes'));
 
-// Ruta de salud
-app.get('/api/ping', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), timezone: process.env.TZ });
+// Ruta de salud — útil para verificar TZ en producción vs local
+app.get('/api/ping', async (req, res) => {
+  const ahora = new Date();
+  let dbTz = null;
+  let dbNow = null;
+  try {
+    const prisma = require('./config/prisma');
+    const result = await prisma.$queryRawUnsafe(
+      "SELECT current_setting('TIMEZONE') AS tz, now() AS ahora"
+    );
+    dbTz = result[0]?.tz;
+    dbNow = result[0]?.ahora;
+  } catch (err) {
+    dbTz = `error: ${err.message}`;
+  }
+  res.json({
+    status: 'ok',
+    timestamp_utc: ahora.toISOString(),
+    timestamp_local: ahora.toLocaleString('es-PE', { timeZone: process.env.TZ || 'America/Lima' }),
+    node_tz: process.env.TZ,
+    db_tz: dbTz,
+    db_now: dbNow,
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

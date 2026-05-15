@@ -212,7 +212,8 @@ const descargar = async (req, res) => {
     if (material.extension === 'enlace') {
       return res.redirect(material.ruta_archivo);
     }
-    res.redirect(`/uploads/${material.ruta_archivo}`);
+    const nombre = material.nombre_archivo_original || path.basename(material.ruta_archivo);
+    res.redirect(`/uploads/${material.ruta_archivo}?download=${encodeURIComponent(nombre)}`);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Error al descargar material' });
