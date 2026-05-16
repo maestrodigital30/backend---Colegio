@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 4000;
 // Crear directorios de uploads si no existen (modo local)
 const uploadsDir = path.join(__dirname, 'uploads');
 if (STORAGE_TYPE === 'local') {
-  [uploadsDir, path.join(uploadsDir, 'logos'), path.join(uploadsDir, 'alumnos'), path.join(uploadsDir, 'podcasts'), path.join(uploadsDir, 'biblioteca')].forEach(dir => {
+  [uploadsDir, path.join(uploadsDir, 'logos'), path.join(uploadsDir, 'alumnos'), path.join(uploadsDir, 'podcasts'), path.join(uploadsDir, 'biblioteca'), path.join(uploadsDir, 'concursos')].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   });
 }
@@ -46,10 +46,19 @@ app.use('/api/config-academica', require('./routes/configAcademicaRoutes'));
 app.use('/api/notas', require('./routes/notasRoutes'));
 app.use('/api/whatsapp', require('./routes/whatsappRoutes'));
 app.use('/api/trivia', require('./routes/triviaRoutes'));
+app.use('/api/trivia/imagenes', require('./routes/triviaImagenRoutes'));
 app.use('/api/trivia-publica', require('./routes/triviaPublicaRoutes'));
+app.use('/api/concursos', require('./routes/concursoRoutes'));
+app.use('/api/concursos-admin', require('./routes/concursoHistorialRoutes'));
+app.use('/api/concursos-juego', require('./routes/concursoJuegoRoutes'));
 app.use('/api/podcasts', require('./routes/podcastRoutes'));
 app.use('/api/biblioteca', require('./routes/bibliotecaRoutes'));
 app.use('/api/alumno-portal', require('./routes/alumnoPortalRoutes'));
+app.use('/api/sistema/sonidos', require('./routes/sistemaSonidoRoutes'));
+app.use('/api/musica', require('./routes/musicaCatalogoRoutes'));
+app.use('/api/avatares', require('./routes/avatarCatalogoRoutes'));
+app.use('/api/temas-visuales', require('./routes/temaVisualRoutes'));
+app.use('/api/identidad-visual', require('./routes/identidadVisualRoutes'));
 
 // Ruta de salud — útil para verificar TZ en producción vs local
 app.get('/api/ping', async (req, res) => {

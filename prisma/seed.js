@@ -64,6 +64,9 @@ async function main() {
     { codigo: 'admin.ranking',            nombre: 'Ranking',                   tipo: 'ruta', recurso: '/admin/ranking' },
     { codigo: 'admin.podcast',            nombre: 'Podcast',                   tipo: 'ruta', recurso: '/admin/podcast' },
     { codigo: 'admin.biblioteca',         nombre: 'Biblioteca Digital',        tipo: 'ruta', recurso: '/admin/biblioteca' },
+    { codigo: 'admin.concursos',          nombre: 'Concursos',                 tipo: 'ruta', recurso: '/admin/concursos' },
+    { codigo: 'admin.concursos_historial',nombre: 'Historial Concursos',       tipo: 'ruta', recurso: '/admin/concursos-historial' },
+    { codigo: 'admin.concursos_ranking',  nombre: 'Ranking Concursos',         tipo: 'ruta', recurso: '/admin/concursos-ranking' },
     // DOCENTE
     { codigo: 'docente.dashboard',        nombre: 'Dashboard Docente',         tipo: 'ruta', recurso: '/docente/dashboard' },
     { codigo: 'docente.periodos',         nombre: 'Periodos Escolares',        tipo: 'ruta', recurso: '/docente/periodos' },
@@ -81,6 +84,7 @@ async function main() {
     { codigo: 'docente.ranking',          nombre: 'Ranking Acumulado',         tipo: 'ruta', recurso: '/docente/ranking' },
     { codigo: 'docente.podcast',          nombre: 'Podcast',                   tipo: 'ruta', recurso: '/docente/podcast' },
     { codigo: 'docente.biblioteca',       nombre: 'Biblioteca Digital',        tipo: 'ruta', recurso: '/docente/biblioteca' },
+    { codigo: 'docente.concursos',        nombre: 'Concursos',                 tipo: 'ruta', recurso: '/docente/concursos' },
     // ALUMNO
     { codigo: 'alumno.dashboard',         nombre: 'Dashboard Alumno',          tipo: 'ruta', recurso: '/alumno/dashboard' },
     { codigo: 'alumno.cursos',            nombre: 'Mis Cursos',                tipo: 'ruta', recurso: '/alumno/cursos' },
@@ -90,6 +94,7 @@ async function main() {
     { codigo: 'alumno.carnet',            nombre: 'Mi Carnet',                 tipo: 'ruta', recurso: '/alumno/carnet' },
     { codigo: 'alumno.perfil',            nombre: 'Mi Perfil',                 tipo: 'ruta', recurso: '/alumno/perfil' },
     { codigo: 'alumno.biblioteca',        nombre: 'Biblioteca Digital',        tipo: 'ruta', recurso: '/alumno/biblioteca' },
+    { codigo: 'alumno.concursos',         nombre: 'Concursos',                 tipo: 'ruta', recurso: '/alumno/concursos' },
   ];
   await prisma.tbl_permisos.createMany({ data: permisosData, skipDuplicates: true });
   console.log(`  Permisos creados (${permisosData.length})`);
@@ -147,6 +152,81 @@ async function main() {
   } else {
     console.log('  Configuración del sistema ya existe (sin cambios)');
   }
+
+  // =============================================
+  // 6. TEMAS VISUALES (5 presets para identidad visual del alumno)
+  // =============================================
+  const TEMAS_VISUALES = [
+    {
+      codigo: 'minimalista',
+      nombre: 'Minimalista',
+      descripcion: 'Diseño limpio y sobrio con foco en la legibilidad.',
+      orden: 1,
+      config_json: {
+        colors: { primary: '#1976D2', secondary: '#42A5F5', accent: '#0D47A1', surface: '#FFFFFF', text: '#0F172A' },
+        font: { display: 'Outfit', body: 'DM Sans' },
+        decorations: { glassmorphism: false, neonGlow: false, scanlines: false, particles: false },
+        effects: { animationIntensity: 'low' },
+      },
+    },
+    {
+      codigo: 'gamer',
+      nombre: 'Gamer',
+      descripcion: 'Energía arcade con bordes vibrantes y acentos saturados.',
+      orden: 2,
+      config_json: {
+        colors: { primary: '#FF3D7F', secondary: '#FFD166', accent: '#22D3EE', surface: '#0F0F1E', text: '#F8FAFC' },
+        font: { display: 'Outfit', body: 'DM Sans' },
+        decorations: { glassmorphism: true, neonGlow: true, scanlines: false, particles: true },
+        effects: { animationIntensity: 'high' },
+      },
+    },
+    {
+      codigo: 'neon',
+      nombre: 'Neón',
+      descripcion: 'Estética cyber con halos luminosos y contraste alto.',
+      orden: 3,
+      config_json: {
+        colors: { primary: '#22D3EE', secondary: '#A855F7', accent: '#F472B6', surface: '#0B1024', text: '#F8FAFC' },
+        font: { display: 'Outfit', body: 'DM Sans' },
+        decorations: { glassmorphism: true, neonGlow: true, scanlines: true, particles: false },
+        effects: { animationIntensity: 'high' },
+      },
+    },
+    {
+      codigo: 'sci_fi',
+      nombre: 'Ciencia Ficción',
+      descripcion: 'Inspirado en HUDs futuristas con tipografía técnica.',
+      orden: 4,
+      config_json: {
+        colors: { primary: '#00E5FF', secondary: '#1DE9B6', accent: '#FF6E40', surface: '#021024', text: '#E0F7FA' },
+        font: { display: 'Outfit', body: 'DM Sans' },
+        decorations: { glassmorphism: true, neonGlow: true, scanlines: true, particles: true },
+        effects: { animationIntensity: 'medium' },
+      },
+    },
+    {
+      codigo: 'anime',
+      nombre: 'Anime',
+      descripcion: 'Paleta pastel y bordes redondeados con energía juvenil.',
+      orden: 5,
+      config_json: {
+        colors: { primary: '#FF80AB', secondary: '#FFD180', accent: '#82B1FF', surface: '#FFF1F8', text: '#3A1051' },
+        font: { display: 'Outfit', body: 'DM Sans' },
+        decorations: { glassmorphism: false, neonGlow: false, scanlines: false, particles: true },
+        effects: { animationIntensity: 'medium' },
+      },
+    },
+  ];
+
+  for (const tema of TEMAS_VISUALES) {
+    await prisma.tbl_temas_visuales.upsert({
+      where: { codigo: tema.codigo },
+      update: { nombre: tema.nombre, descripcion: tema.descripcion, orden: tema.orden, config_json: tema.config_json },
+      create: tema,
+    });
+  }
+  console.log(`  Seed temas visuales: ${TEMAS_VISUALES.length} temas`);
 
   console.log('\n========================================');
   console.log('SEED MÍNIMO COMPLETADO');

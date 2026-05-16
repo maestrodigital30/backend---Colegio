@@ -125,6 +125,7 @@ const crearPartida = async (datos, userId) => {
       mostrar_puntaje: datos.mostrar_puntaje !== undefined ? datos.mostrar_puntaje : true,
       mostrar_resumen: datos.mostrar_resumen !== undefined ? datos.mostrar_resumen : false,
       mostrar_ranking: datos.mostrar_ranking !== undefined ? datos.mostrar_ranking : false,
+      id_musica_fondo: datos.id_musica_fondo != null ? parseInt(datos.id_musica_fondo) : null,
       id_usuario_registro: userId,
     };
     if (datos.id_docente != null) partidaData.id_docente = parseInt(datos.id_docente);
@@ -298,6 +299,17 @@ const obtenerPartida = async (idPartida) => {
   });
 };
 
+async function obtenerPartidaConMultimedia(id) {
+  return prisma.tbl_trivia_partidas.findUnique({
+    where: { id },
+    include: {
+      tbl_trivia_temas: true,
+      tbl_trivia_imagenes: { where: { estado: 1 }, orderBy: { orden: 'asc' } },
+      tbl_musica_fondo_catalogo: true,
+    },
+  });
+}
+
 // ===== HISTORIAL =====
 const obtenerHistorial = async (filtros = {}) => {
   const where = {};
@@ -312,7 +324,23 @@ const obtenerHistorial = async (filtros = {}) => {
       tbl_cursos: { select: { nombre: true } },
       tbl_trivia_participantes: {
         where: { estado: 1 },
-        include: { tbl_alumnos: { select: { id: true, nombres: true, apellidos: true } } },
+        include: {
+          tbl_alumnos: {
+            include: {
+              tbl_alumno_identidad_visual: {
+                include: {
+                  avatar: true,
+                  personaje: true,
+                  marco: true,
+                  tbl_temas_visuales: true,
+                },
+              },
+            },
+          },
+          avatar_publico: true,
+          personaje_publico: true,
+          marco_publico: true,
+        },
       },
     },
     orderBy: { fecha_hora_registro: 'desc' },
@@ -323,7 +351,23 @@ const obtenerHistorial = async (filtros = {}) => {
 const obtenerRespuestasParticipante = async (idPartida, idParticipante) => {
   const participante = await prisma.tbl_trivia_participantes.findFirst({
     where: { id: idParticipante, id_partida: idPartida, estado: 1 },
-    include: { tbl_alumnos: { select: { id: true, nombres: true, apellidos: true } } },
+    include: {
+      tbl_alumnos: {
+        include: {
+          tbl_alumno_identidad_visual: {
+            include: {
+              avatar: true,
+              personaje: true,
+              marco: true,
+              tbl_temas_visuales: true,
+            },
+          },
+        },
+      },
+      avatar_publico: true,
+      personaje_publico: true,
+      marco_publico: true,
+    },
   });
   if (!participante) return null;
 
@@ -406,7 +450,16 @@ const obtenerRanking = async (idCurso, idPeriodoEscolar) => {
   const alumnoIds = Object.keys(acumulado).map(Number);
   const alumnos = await prisma.tbl_alumnos.findMany({
     where: { id: { in: alumnoIds } },
-    select: { id: true, nombres: true, apellidos: true },
+    include: {
+      tbl_alumno_identidad_visual: {
+        include: {
+          avatar: true,
+          personaje: true,
+          marco: true,
+          tbl_temas_visuales: true,
+        },
+      },
+    },
   });
 
   const ranking = alumnos.map(a => ({
@@ -414,6 +467,7 @@ const obtenerRanking = async (idCurso, idPeriodoEscolar) => {
     nombres: a.nombres,
     apellidos: a.apellidos,
     puntaje_acumulado: Math.round(acumulado[a.id] * 100) / 100,
+    tbl_alumno_identidad_visual: a.tbl_alumno_identidad_visual || null,
   }));
 
   ranking.sort((a, b) => b.puntaje_acumulado - a.puntaje_acumulado);
@@ -456,5 +510,6 @@ module.exports = {
   obtenerTemas, crearTema, actualizarTema, inactivarTema,
   obtenerPreguntas, crearPregunta, actualizarPregunta, inactivarPregunta,
   crearPartida, iniciarPartida, registrarRespuesta, finalizarPartida, cancelarPartida, obtenerPartida,
+  obtenerPartidaConMultimedia,
   obtenerHistorial, obtenerRespuestasParticipante, obtenerRanking, obtenerHistorialAlumno,
 };

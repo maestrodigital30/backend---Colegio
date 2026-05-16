@@ -5,6 +5,7 @@ const { verificarTokenTrivia } = require('../middleware/triviaAuthMiddleware');
 
 // Public — no auth required
 router.post('/validar-acceso', ctrl.validarAcceso);
+router.get('/avatares', ctrl.listarAvataresPublicos);
 
 // Protected by trivia session token
 router.get('/partida', verificarTokenTrivia, ctrl.obtenerPartida);

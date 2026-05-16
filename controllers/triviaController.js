@@ -161,6 +161,15 @@ const obtenerPartida = async (req, res) => {
   }
 };
 
+const obtenerPartidaConMultimedia = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const partida = await model.obtenerPartidaConMultimedia(id);
+    if (!partida) return res.status(404).json({ error: 'Partida no encontrada' });
+    res.json(partida);
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener partida' }); }
+};
+
 const registrarRespuesta = async (req, res) => {
   try {
     const { id_partida, id_participante, id_pregunta, id_opcion_seleccionada } = req.body;
@@ -289,6 +298,6 @@ const obtenerHistorialAlumno = async (req, res) => {
 module.exports = {
   obtenerTemas, crearTema, actualizarTema, inactivarTema,
   obtenerPreguntas, crearPregunta, actualizarPregunta, inactivarPregunta,
-  crearPartida, iniciarPartida, obtenerPartida, registrarRespuesta, finalizarPartida, cancelarPartida,
+  crearPartida, iniciarPartida, obtenerPartida, obtenerPartidaConMultimedia, registrarRespuesta, finalizarPartida, cancelarPartida,
   obtenerHistorial, obtenerRespuestasParticipante, obtenerRanking, obtenerHistorialAlumno,
 };

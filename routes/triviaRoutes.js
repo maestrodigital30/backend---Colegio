@@ -22,6 +22,7 @@ router.delete('/preguntas/:id', ctrl.inactivarPregunta);
 // Partidas
 router.post('/partidas', ctrl.crearPartida);
 router.get('/partidas/:id', ctrl.obtenerPartida);
+router.get('/partidas/:id/multimedia', ctrl.obtenerPartidaConMultimedia);
 router.post('/partidas/:id/iniciar', ctrl.iniciarPartida);
 router.post('/partidas/:id/finalizar', ctrl.finalizarPartida);
 router.post('/partidas/:id/cancelar', ctrl.cancelarPartida);

@@ -26,7 +26,7 @@ const generarCodigoAcceso = async () => {
 };
 
 // Validate access: codigo_trivia + dni -> create/resume session
-const validarAcceso = async (codigoTrivia, dni) => {
+const validarAcceso = async (codigoTrivia, dni, identidadPublica = {}) => {
   // 1. Find partida by code (any state first, then validate)
   const partida = await prisma.tbl_trivia_partidas.findFirst({
     where: {
@@ -66,7 +66,7 @@ const validarAcceso = async (codigoTrivia, dni) => {
     return _validarAccesoEquipo(partida, alumno);
   }
 
-  return _validarAccesoIndividual(partida, alumno);
+  return _validarAccesoIndividual(partida, alumno, identidadPublica);
 };
 
 // --- Flow for GROUPS / PAIRS ---
@@ -130,7 +130,7 @@ const _validarAccesoEquipo = async (partida, alumno) => {
 };
 
 // --- Flow for INDIVIDUAL ---
-const _validarAccesoIndividual = async (partida, alumno) => {
+const _validarAccesoIndividual = async (partida, alumno, identidadPublica = {}) => {
   // 1. Check for existing in-progress session (block duplicate)
   const sesionActiva = await prisma.tbl_trivia_sesiones.findFirst({
     where: {
@@ -168,6 +168,10 @@ const _validarAccesoIndividual = async (partida, alumno) => {
       tipo_participante: 'alumno',
       id_alumno: alumno.id,
       etiqueta_participante: `${alumno.apellidos}, ${alumno.nombres}`,
+      id_avatar_publico: identidadPublica.id_avatar_publico ?? null,
+      id_personaje_publico: identidadPublica.id_personaje_publico ?? null,
+      id_marco_publico: identidadPublica.id_marco_publico ?? null,
+      color_publico: identidadPublica.color_publico ?? null,
     },
   });
 
@@ -223,7 +227,11 @@ const _crearSesion = async (partida, alumno, participante, numeroIntento) => {
 const obtenerPartidaPublica = async (sesionTrivia) => {
   const partida = await prisma.tbl_trivia_partidas.findFirst({
     where: { id: sesionTrivia.id_partida },
-    include: { tbl_trivia_temas: { select: { nombre: true } } },
+    include: {
+      tbl_trivia_temas: { select: { nombre: true } },
+      tbl_trivia_imagenes: { where: { estado: 1 }, orderBy: { orden: 'asc' } },
+      tbl_musica_fondo_catalogo: true,
+    },
   });
 
   return {
@@ -235,6 +243,8 @@ const obtenerPartidaPublica = async (sesionTrivia) => {
     mostrar_puntaje: partida.mostrar_puntaje,
     mostrar_resumen: partida.mostrar_resumen,
     mostrar_ranking: partida.mostrar_ranking,
+    tbl_trivia_imagenes: partida.tbl_trivia_imagenes,
+    tbl_musica_fondo_catalogo: partida.tbl_musica_fondo_catalogo,
   };
 };
 
@@ -467,7 +477,11 @@ const obtenerRankingPublico = async (sesionTrivia) => {
     include: {
       tbl_trivia_participantes: {
         where: { estado: 1, id_alumno: { not: null } },
-        select: { id_alumno: true, puntaje_final: true, numero_equipo: true },
+        include: {
+          avatar_publico: true,
+          personaje_publico: true,
+          marco_publico: true,
+        },
       },
     },
   });
@@ -515,16 +529,49 @@ const obtenerRankingPublico = async (sesionTrivia) => {
 
   const alumnos = await prisma.tbl_alumnos.findMany({
     where: { id: { in: alumnoIds } },
-    select: { id: true, nombres: true, apellidos: true },
+    include: {
+      tbl_alumno_identidad_visual: {
+        include: {
+          avatar: true,
+          personaje: true,
+          marco: true,
+          tbl_temas_visuales: true,
+        },
+      },
+    },
   });
+
+  // Build a per-student snapshot of the public visual identity captured in their
+  // last (highest score) participation. This lets the ranking display the avatar
+  // chosen at access time even when the student has no saved identity.
+  const snapshotPublicoPorAlumno = {};
+  for (const p of partidas) {
+    for (const part of p.tbl_trivia_participantes) {
+      if (!part.id_alumno) continue;
+      const prev = snapshotPublicoPorAlumno[part.id_alumno];
+      const puntaje = parseFloat(part.puntaje_final);
+      if (!prev || puntaje > prev.puntaje) {
+        snapshotPublicoPorAlumno[part.id_alumno] = {
+          puntaje,
+          avatar_publico: part.avatar_publico || null,
+          personaje_publico: part.personaje_publico || null,
+          marco_publico: part.marco_publico || null,
+          color_publico: part.color_publico || null,
+        };
+      }
+    }
+  }
 
   // Build sorted ranking
   const ranking = alumnos
     .map(a => ({
       posicion: 0,
+      id_alumno: a.id,
       nombre: `${a.nombres} ${a.apellidos}`,
       puntaje: Math.round((acumulado[a.id] || 0) * 100) / 100,
       es_actual: a.id === sesionTrivia.id_alumno,
+      identidad_visual: a.tbl_alumno_identidad_visual || null,
+      identidad_publica: snapshotPublicoPorAlumno[a.id] || null,
     }))
     .sort((a, b) => b.puntaje - a.puntaje);
 

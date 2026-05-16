@@ -66,9 +66,11 @@ model tbl_usuarios {
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
 
-  tbl_roles          tbl_roles             @relation(fields: [id_rol], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuarios_roles")
-  tbl_perfil_docente tbl_perfiles_docente?
-  tbl_alumno         tbl_alumnos?
+  tbl_roles             tbl_roles               @relation(fields: [id_rol], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuarios_roles")
+  tbl_perfil_docente    tbl_perfiles_docente?
+  tbl_alumno            tbl_alumnos?
+  tbl_concursos         tbl_concursos[]
+  tbl_concurso_intentos tbl_concurso_intentos[]
 }
 
 model tbl_perfiles_docente {
@@ -165,6 +167,7 @@ model tbl_cursos {
   tbl_envios_whatsapp         tbl_envios_whatsapp[]
   tbl_envios_whatsapp_detalle tbl_envios_whatsapp_detalle[]
   tbl_trivia_partidas         tbl_trivia_partidas[]
+  tbl_concursos               tbl_concursos[]
 }
 
 model tbl_alumnos {
@@ -196,6 +199,8 @@ model tbl_alumnos {
   tbl_trivia_participantes         tbl_trivia_participantes[]
   tbl_trivia_sesiones              tbl_trivia_sesiones[]
   tbl_datos_antropometricos_alumno tbl_datos_antropometricos_alumno[]
+  tbl_alumno_identidad_visual      tbl_alumno_identidad_visual?
+  tbl_concurso_intentos            tbl_concurso_intentos[]
 }
 
 // =============================================
@@ -583,6 +588,7 @@ model tbl_trivia_partidas {
   mostrar_puntaje         Boolean   @default(true)
   mostrar_resumen         Boolean   @default(false)
   mostrar_ranking         Boolean   @default(false)
+  id_musica_fondo         Int?
   fecha_hora_inicio       DateTime? @db.Timestamptz(6)
   fecha_hora_fin          DateTime? @db.Timestamptz(6)
   id_usuario_registro     Int?
@@ -598,6 +604,8 @@ model tbl_trivia_partidas {
   tbl_trivia_participantes      tbl_trivia_participantes[]
   tbl_trivia_partidas_preguntas tbl_trivia_partidas_preguntas[]
   tbl_trivia_sesiones           tbl_trivia_sesiones[]
+  tbl_trivia_imagenes           tbl_trivia_imagenes[]
+  tbl_musica_fondo_catalogo     tbl_musica_fondo_catalogo?      @relation(fields: [id_musica_fondo], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_partidas_musica")
 }
 
 model tbl_trivia_participantes {
@@ -614,10 +622,17 @@ model tbl_trivia_participantes {
   id_usuario_modificacion Int?
   fecha_hora_modificacion DateTime? @db.Timestamptz(6)
   estado                  Int       @default(1)
+  id_avatar_publico       Int?
+  id_personaje_publico    Int?
+  id_marco_publico        Int?
+  color_publico           String?   @db.VarChar(7)
 
   tbl_trivia_partidas   tbl_trivia_partidas     @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_partida")
   tbl_alumnos           tbl_alumnos?            @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_participantes_alumno")
   tbl_trivia_respuestas tbl_trivia_respuestas[]
+  avatar_publico        tbl_avatares_catalogo?  @relation("ParticipanteAvatar", fields: [id_avatar_publico], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_participante_avatar")
+  personaje_publico     tbl_avatares_catalogo?  @relation("ParticipantePersonaje", fields: [id_personaje_publico], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_participante_personaje")
+  marco_publico         tbl_avatares_catalogo?  @relation("ParticipanteMarco", fields: [id_marco_publico], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_participante_marco")
 }
 
 model tbl_trivia_partidas_preguntas {
@@ -664,6 +679,126 @@ model tbl_trivia_sesiones {
   tbl_alumnos         tbl_alumnos         @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_sesiones_alumno")
 
   @@unique([id_partida, id_alumno, numero_intento], map: "uq_sesion_partida_alumno_intento")
+}
+
+// =============================================
+// CAPA 6.5: MULTIMEDIA Y PERSONALIZACIÓN VISUAL TRIVIA
+// =============================================
+
+model tbl_trivia_imagenes {
+  id                      Int       @id @default(autoincrement())
+  id_partida              Int
+  ruta_archivo            String    @db.VarChar(500)
+  nombre_archivo_original String?   @db.VarChar(255)
+  tipo_mime               String?   @db.VarChar(50)
+  tamano_bytes            BigInt?
+  orden                   Int       @default(0)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_trivia_partidas tbl_trivia_partidas @relation(fields: [id_partida], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trivia_imagenes_partida")
+
+  @@index([id_partida], map: "idx_trivia_imagenes_partida")
+}
+
+model tbl_sistema_sonidos {
+  id                      Int       @id @default(autoincrement())
+  tipo_evento             String    @unique @db.VarChar(30)
+  ruta_archivo            String    @db.VarChar(500)
+  nombre_archivo_original String?   @db.VarChar(255)
+  tipo_mime               String?   @db.VarChar(50)
+  tamano_bytes            BigInt?
+  esta_activo             Boolean   @default(true)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+}
+
+model tbl_musica_fondo_catalogo {
+  id                      Int       @id @default(autoincrement())
+  nombre                  String    @db.VarChar(150)
+  estilo                  String    @db.VarChar(30)
+  ruta_archivo            String    @db.VarChar(500)
+  nombre_archivo_original String?   @db.VarChar(255)
+  tipo_mime               String?   @db.VarChar(50)
+  tamano_bytes            BigInt?
+  duracion_segundos       Int?
+  esta_activo             Boolean   @default(true)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_trivia_partidas tbl_trivia_partidas[]
+
+  @@index([estilo], map: "idx_musica_estilo")
+}
+
+model tbl_avatares_catalogo {
+  id                      Int       @id @default(autoincrement())
+  tipo                    String    @db.VarChar(20)
+  nombre                  String    @db.VarChar(150)
+  ruta_archivo            String    @db.VarChar(500)
+  nombre_archivo_original String?   @db.VarChar(255)
+  tipo_mime               String?   @db.VarChar(50)
+  orden                   Int       @default(0)
+  es_default              Boolean   @default(false)
+  esta_activo             Boolean   @default(true)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  identidad_avatar        tbl_alumno_identidad_visual[] @relation("AvatarIdentidad")
+  identidad_personaje     tbl_alumno_identidad_visual[] @relation("PersonajeIdentidad")
+  identidad_marco         tbl_alumno_identidad_visual[] @relation("MarcoIdentidad")
+  participantes_avatar    tbl_trivia_participantes[]    @relation("ParticipanteAvatar")
+  participantes_personaje tbl_trivia_participantes[]    @relation("ParticipantePersonaje")
+  participantes_marco     tbl_trivia_participantes[]    @relation("ParticipanteMarco")
+
+  @@index([tipo, esta_activo], map: "idx_avatares_tipo_activo")
+}
+
+model tbl_temas_visuales {
+  id                      Int       @id @default(autoincrement())
+  codigo                  String    @unique @db.VarChar(30)
+  nombre                  String    @db.VarChar(100)
+  descripcion             String?
+  config_json             Json
+  orden                   Int       @default(0)
+  esta_activo             Boolean   @default(true)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_alumno_identidad_visual tbl_alumno_identidad_visual[]
+}
+
+model tbl_alumno_identidad_visual {
+  id_alumno                Int       @id
+  id_avatar                Int?
+  id_personaje             Int?
+  id_marco                 Int?
+  color_personal           String?   @db.VarChar(7)
+  id_tema_visual           Int?
+  musica_habilitada        Boolean   @default(true)
+  sonidos_habilitados      Boolean   @default(true)
+  fecha_hora_actualizacion DateTime? @default(now()) @db.Timestamptz(6)
+
+  tbl_alumnos        tbl_alumnos            @relation(fields: [id_alumno], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_identidad_alumno")
+  avatar             tbl_avatares_catalogo? @relation("AvatarIdentidad", fields: [id_avatar], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_identidad_avatar")
+  personaje          tbl_avatares_catalogo? @relation("PersonajeIdentidad", fields: [id_personaje], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_identidad_personaje")
+  marco              tbl_avatares_catalogo? @relation("MarcoIdentidad", fields: [id_marco], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_identidad_marco")
+  tbl_temas_visuales tbl_temas_visuales?    @relation(fields: [id_tema_visual], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_identidad_tema")
 }
 
 // =============================================
@@ -761,4 +896,154 @@ model tbl_biblioteca_materiales {
   estado                  Int       @default(1)
 
   tbl_biblioteca_categorias tbl_biblioteca_categorias? @relation(fields: [id_categoria], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_biblioteca_materiales_categoria")
+}
+
+// =============================================
+// CAPA 10: CONCURSOS (Quiz Show - modulo independiente de Trivia)
+// =============================================
+
+model tbl_concursos {
+  id              Int     @id @default(autoincrement())
+  titulo          String  @db.VarChar(200)
+  descripcion     String? @db.Text
+  id_curso        Int?
+  area            String? @db.VarChar(100)
+  nivel           String? @db.VarChar(50)
+  tema_visual     String  @default("clasico") @db.VarChar(30)
+  publicado       Boolean @default(false)
+  multimedia_url  String? @db.VarChar(500)
+  multimedia_tipo String? @db.VarChar(20)
+
+  // Configuracion de juego
+  tiempo_por_pregunta      Int     @default(20)
+  puntos_base              Int     @default(100)
+  penalizacion_incorrecta  Int     @default(0)
+  orden_preguntas          String  @default("fijo") @db.VarChar(20)
+  orden_opciones           String  @default("fijo") @db.VarChar(20)
+  permite_reintentos       Boolean @default(true)
+  max_intentos_por_usuario Int     @default(0)
+
+  // Comodines
+  comodin_50_50_habilitado         Boolean @default(true)
+  comodin_tiempo_extra_habilitado  Boolean @default(true)
+  comodin_tiempo_extra_segundos    Int     @default(10)
+  comodin_doble_puntaje_habilitado Boolean @default(true)
+
+  // Ronda bonus
+  bonus_habilitado        Boolean @default(false)
+  bonus_cantidad_tarjetas Int     @default(5)
+  bonus_premio_minimo     Int     @default(10)
+  bonus_premio_maximo     Int     @default(100)
+
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_cursos             tbl_cursos?              @relation(fields: [id_curso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concursos_curso")
+  tbl_usuarios           tbl_usuarios?            @relation(fields: [id_usuario_registro], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concursos_usuario_registro")
+  tbl_concurso_preguntas tbl_concurso_preguntas[]
+  tbl_concurso_intentos  tbl_concurso_intentos[]
+}
+
+model tbl_concurso_preguntas {
+  id                      Int       @id @default(autoincrement())
+  id_concurso             Int
+  texto                   String    @db.Text
+  orden                   Int       @default(1)
+  puntos                  Int?
+  tiempo_limite_segundos  Int?
+  multimedia_url          String?   @db.VarChar(500)
+  multimedia_tipo         String?   @db.VarChar(20)
+  permite_multiple        Boolean   @default(false)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_concursos           tbl_concursos             @relation(fields: [id_concurso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_preguntas_concurso")
+  tbl_concurso_opciones   tbl_concurso_opciones[]
+  tbl_concurso_respuestas tbl_concurso_respuestas[]
+}
+
+model tbl_concurso_opciones {
+  id                      Int       @id @default(autoincrement())
+  id_pregunta             Int
+  texto                   String?   @db.Text
+  es_correcta             Boolean   @default(false)
+  orden                   Int       @default(1)
+  multimedia_url          String?   @db.VarChar(500)
+  multimedia_tipo         String?   @db.VarChar(20)
+  id_usuario_registro     Int?
+  fecha_hora_registro     DateTime? @default(now()) @db.Timestamptz(6)
+  id_usuario_modificacion Int?
+  fecha_hora_modificacion DateTime? @db.Timestamptz(6)
+  estado                  Int       @default(1)
+
+  tbl_concurso_preguntas  tbl_concurso_preguntas    @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_opciones_pregunta")
+  tbl_concurso_respuestas tbl_concurso_respuestas[]
+}
+
+model tbl_concurso_intentos {
+  id                          Int       @id @default(autoincrement())
+  id_concurso                 Int
+  id_usuario                  Int
+  id_alumno                   Int?
+  estado_intento              String    @default("en_progreso") @db.VarChar(20)
+  puntaje_preguntas           Int       @default(0)
+  puntaje_bonus               Int       @default(0)
+  puntaje_total               Int       @default(0)
+  respuestas_correctas        Int       @default(0)
+  respuestas_incorrectas      Int       @default(0)
+  preguntas_totales           Int       @default(0)
+  tiempo_total_segundos       Int       @default(0)
+  comodin_50_50_usado         Boolean   @default(false)
+  comodin_tiempo_extra_usado  Boolean   @default(false)
+  comodin_doble_puntaje_usado Boolean   @default(false)
+  token_intento               String    @unique @db.VarChar(500)
+  fecha_hora_inicio           DateTime  @default(now()) @db.Timestamptz(6)
+  fecha_hora_fin              DateTime? @db.Timestamptz(6)
+  estado                      Int       @default(1)
+
+  tbl_concursos               tbl_concursos                 @relation(fields: [id_concurso], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_intentos_concurso")
+  tbl_usuarios                tbl_usuarios                  @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_intentos_usuario")
+  tbl_alumnos                 tbl_alumnos?                  @relation(fields: [id_alumno], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_intentos_alumno")
+  tbl_concurso_respuestas     tbl_concurso_respuestas[]
+  tbl_concurso_bonus_tarjetas tbl_concurso_bonus_tarjetas[]
+}
+
+model tbl_concurso_respuestas {
+  id                             Int      @id @default(autoincrement())
+  id_intento                     Int
+  id_pregunta                    Int
+  id_opcion_seleccionada         Int?
+  ids_opciones_seleccionadas     String?  @db.Text
+  es_correcta                    Boolean  @default(false)
+  puntos_obtenidos               Int      @default(0)
+  tiempo_usado_segundos          Int      @default(0)
+  comodin_50_50_aplicado         Boolean  @default(false)
+  comodin_tiempo_extra_aplicado  Boolean  @default(false)
+  comodin_doble_puntaje_aplicado Boolean  @default(false)
+  fecha_hora_respuesta           DateTime @default(now()) @db.Timestamptz(6)
+  estado                         Int      @default(1)
+
+  tbl_concurso_intentos  tbl_concurso_intentos  @relation(fields: [id_intento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_respuestas_intento")
+  tbl_concurso_preguntas tbl_concurso_preguntas @relation(fields: [id_pregunta], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_respuestas_pregunta")
+  tbl_concurso_opciones  tbl_concurso_opciones? @relation(fields: [id_opcion_seleccionada], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_respuestas_opcion")
+
+  @@unique([id_intento, id_pregunta], map: "uq_concurso_respuesta_intento_pregunta")
+}
+
+model tbl_concurso_bonus_tarjetas {
+  id                   Int       @id @default(autoincrement())
+  id_intento           Int
+  orden                Int
+  puntos               Int
+  seleccionada         Boolean   @default(false)
+  fecha_hora_seleccion DateTime? @db.Timestamptz(6)
+  estado               Int       @default(1)
+
+  tbl_concurso_intentos tbl_concurso_intentos @relation(fields: [id_intento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_concurso_bonus_intento")
 }
